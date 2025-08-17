@@ -1,4 +1,4 @@
-import { App, Notice, TFile, TFolder, MarkdownView, moment, normalizePath } from 'obsidian';
+import { App, Notice, TFile, TFolder, moment, normalizePath } from 'obsidian';
 import { TemplateProcessor } from './templateProcessor';
 import { Commands } from './types';
 
@@ -40,8 +40,6 @@ export class NoteCreator {
 			
 			// Create the new file
 			const newFile = await this.app.vault.create(filePath, processedContent);
-			
-			new Notice(`Note created: ${newFile.basename}`);
 			
 			// Open the new file
 			await this.openFile(newFile);
