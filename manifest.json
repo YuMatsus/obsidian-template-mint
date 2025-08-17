@@ -3,7 +3,7 @@
 	"name": "Template Mint",
 	"version": "0.2.0",
 	"minAppVersion": "1.8.0",
-	"description": "Create notes directly from templates in Obsidian.",
+	"description": "Create new notes instantly from templates with custom commands and flexible destinations.",
 	"author": "YuMatsus",
 	"authorUrl": "https://github.com/YuMatsus",
 	"fundingUrl": "",
