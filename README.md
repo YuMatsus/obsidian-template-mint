@@ -52,35 +52,15 @@ While Obsidian's core Templates plugin allows you to insert templates into exist
 
 ### Template Variables
 
-Template Mint supports all standard Obsidian template variables for full compatibility with the core Templates plugin, plus additional convenience variables:
+Template Mint supports all standard Obsidian template variables for full compatibility with the core Templates plugin:
 
-#### Core Compatible Variables (Same as Obsidian's Templates plugin)
 - `{{title}}` - Note filename without extension
 - `{{date}}` - Current date (YYYY-MM-DD)
 - `{{time}}` - Current time (HH:mm)
-
-#### Additional Variables (Template Mint Extensions)
-- `{{year}}` - Current year (YYYY)
-- `{{month}}` - Current month (MM)
-- `{{monthname}}` - Month name (e.g., January)
-- `{{week}}` - Week number
-- `{{weekyear}}` - Year and week (YYYY-Www)
-- `{{day}}` - Day of month (DD)
-- `{{dayname}}` - Day name (e.g., Monday)
-
-#### Relative Dates
-- `{{yesterday}}` - Yesterday's date
-- `{{tomorrow}}` - Tomorrow's date
-- `{{lastweek}}` - Date one week ago
-- `{{nextweek}}` - Date one week ahead
-- `{{lastmonth}}` - Date one month ago
-- `{{nextmonth}}` - Date one month ahead
-
-#### Custom Formats
 - `{{date:FORMAT}}` - Custom date format using moment.js syntax
 - `{{time:FORMAT}}` - Custom time format using moment.js syntax
 
-Example: `{{date:YYYY-MM-DD dddd}}` → "2024-01-15 Monday"
+Example: `{{date:YYYY-MM-DD}}` → "2024-01-15"
 
 ## File Naming
 
@@ -126,4 +106,3 @@ MIT
 If you find this plugin helpful, consider supporting its development:
 - Report issues on GitHub
 - Submit feature requests
-- Contribute to the codebase
