@@ -2,6 +2,9 @@
 
 Create notes directly from templates in Obsidian with a streamlined workflow.
 
+<img width="789" height="716" alt="image" src="https://github.com/user-attachments/assets/3d61a607-0c37-4503-b0ef-b249c12fdde1" />
+
+
 ## Why Template Mint?
 
 While Obsidian's core Templates plugin allows you to insert templates into existing notes, **Template Mint** enables you to create new notes directly from templates in a single action. This plugin is designed to complement the core Templates plugin, using the same template format and variables for seamless compatibility.
