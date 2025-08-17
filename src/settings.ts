@@ -151,9 +151,10 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new FolderSearchModal(this.app, async (folder: TFolder) => {
-							// Validate that folder is within vault
-							if (this.isPathWithinVault(folder.path)) {
-								command.destinationFolder = folder.path;
+							// Normalize root path to empty string for UI consistency, then validate
+							const chosenPath = folder.path === '/' ? '' : folder.path;
+							if (this.isPathWithinVault(chosenPath)) {
+								command.destinationFolder = chosenPath;
 								await this.plugin.saveSettings();
 								this.display();
 							} else {
@@ -196,27 +197,30 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 	}
 
 	private isPathWithinVault(path: string): boolean {
+		// Normalize to POSIX, strip leading slashes (vault-relative)
+		const normalizedPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+
 		// Allow empty path (vault root)
-		if (path === '' || path === '/') {
+		if (normalizedPath === '') {
 			return true;
 		}
-		
-		// Ensure path doesn't contain parent directory references
-		if (path.includes('../') || path.includes('..\\')) {
+
+		// Block absolute Windows drive paths
+		if (/^[a-zA-Z]:/.test(path)) {
 			return false;
 		}
-		
-		// Ensure path doesn't start with absolute path indicators outside of vault
-		// Note: In Obsidian, paths are relative to vault root, so starting with / is not an issue
-		if (path.startsWith('\\') || /^[a-zA-Z]:/.test(path)) {
+
+		// Reject parent directory traversal
+		const segments = normalizedPath.split('/');
+		if (segments.some(seg => seg === '..')) {
 			return false;
 		}
-		
-		// Disallow hidden folders that might escape vault
-		if (path.startsWith('.')) {
+
+		// Reject hidden folders (starting with .)
+		if (segments.some(seg => seg.startsWith('.'))) {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -231,8 +235,13 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			return true;
 		}
 		
-		// Check if template is within the configured template folder
-		return templatePath.startsWith(this.plugin.settings.templateFolder);
+		// Normalize paths for comparison
+		const normalizedTemplatePath = templatePath.replace(/\\/g, '/').replace(/^\/+/, '');
+		const normalizedTemplateFolder = this.plugin.settings.templateFolder.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+		
+		// Check if template is within the configured template folder (boundary-aware)
+		return normalizedTemplatePath === normalizedTemplateFolder || 
+			normalizedTemplatePath.startsWith(normalizedTemplateFolder + '/');
 	}
 }
 
@@ -254,9 +263,14 @@ class TemplateSearchModal extends FuzzySuggestModal<TFile> {
 			return files;
 		}
 		
-		// Filter files in the template folder
+		// Normalize template folder for comparison
+		const normalizedFolder = this.templateFolder.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+		
+		// Filter files in the template folder (boundary-aware)
 		return files.filter(file => {
-			return file.path.startsWith(this.templateFolder);
+			const normalizedPath = file.path.replace(/\\/g, '/').replace(/^\/+/, '');
+			return normalizedPath === normalizedFolder || 
+				normalizedPath.startsWith(normalizedFolder + '/');
 		});
 	}
 
