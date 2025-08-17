@@ -1,0 +1,11 @@
+{
+	"id": "template-mint",
+	"name": "Template Mint",
+	"version": "0.1.0",
+	"minAppVersion": "1.8.0",
+	"description": "Create notes directly from templates in Obsidian.",
+	"author": "YuMatsus",
+	"authorUrl": "https://github.com/YuMatsus",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
