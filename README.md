@@ -85,7 +85,7 @@ npm run build
 
 ### Type Checking
 ```bash
-npx tsc -noEmit -skipLibCheck
+npx tsc --noEmit --skipLibCheck
 ```
 
 ### Linting
