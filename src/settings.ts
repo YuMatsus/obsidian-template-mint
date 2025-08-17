@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, TFolder, FuzzySuggestModal, TFile } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFolder, FuzzySuggestModal, TFile, Notice } from 'obsidian';
 import type TemplateMint from './main';
 
 export interface CommandConfig {
@@ -40,10 +40,7 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder('Templates folder path')
 					.setValue(this.plugin.settings.templateFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.templateFolder = value;
-						await this.plugin.saveSettings();
-					});
+					.setDisabled(true); // Make input read-only
 				
 				text.inputEl.style.width = '300px';
 			})
@@ -52,9 +49,14 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new FolderSearchModal(this.app, async (folder: TFolder) => {
-							this.plugin.settings.templateFolder = folder.path;
-							await this.plugin.saveSettings();
-							this.display();
+							// Validate that folder is within vault
+							if (this.isPathWithinVault(folder.path)) {
+								this.plugin.settings.templateFolder = folder.path;
+								await this.plugin.saveSettings();
+								this.display();
+							} else {
+								new Notice('Selected folder must be within the vault');
+							}
 						}).open();
 					});
 			});
@@ -114,10 +116,7 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			.addText(text => {
 				text
 					.setValue(command.templatePath)
-					.onChange(async (value) => {
-						command.templatePath = value;
-						await this.plugin.saveSettings();
-					});
+					.setDisabled(true); // Make input read-only
 				text.inputEl.style.width = '200px';
 			})
 			.addButton(button => {
@@ -125,9 +124,14 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new TemplateSearchModal(this.app, this.plugin.settings.templateFolder, async (file: TFile) => {
-							command.templatePath = file.path;
-							await this.plugin.saveSettings();
-							this.display();
+							// Validate that template is within the template folder
+							if (this.isTemplateInValidFolder(file.path)) {
+								command.templatePath = file.path;
+								await this.plugin.saveSettings();
+								this.display();
+							} else {
+								new Notice('Template must be within the configured template folder');
+							}
 						}).open();
 					});
 			});
@@ -139,10 +143,7 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			.addText(text => {
 				text
 					.setValue(command.destinationFolder)
-					.onChange(async (value) => {
-						command.destinationFolder = value;
-						await this.plugin.saveSettings();
-					});
+					.setDisabled(true); // Make input read-only
 				text.inputEl.style.width = '200px';
 			})
 			.addButton(button => {
@@ -150,9 +151,14 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new FolderSearchModal(this.app, async (folder: TFolder) => {
-							command.destinationFolder = folder.path;
-							await this.plugin.saveSettings();
-							this.display();
+							// Validate that folder is within vault
+							if (this.isPathWithinVault(folder.path)) {
+								command.destinationFolder = folder.path;
+								await this.plugin.saveSettings();
+								this.display();
+							} else {
+								new Notice('Selected folder must be within the vault');
+							}
 						}).open();
 					});
 			});
@@ -187,6 +193,46 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 	private generateCommandId(name: string): string {
 		const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
 		return `${this.plugin.manifest.id}:${slug}`;
+	}
+
+	private isPathWithinVault(path: string): boolean {
+		// Allow empty path (vault root)
+		if (path === '' || path === '/') {
+			return true;
+		}
+		
+		// Ensure path doesn't contain parent directory references
+		if (path.includes('../') || path.includes('..\\')) {
+			return false;
+		}
+		
+		// Ensure path doesn't start with absolute path indicators outside of vault
+		// Note: In Obsidian, paths are relative to vault root, so starting with / is not an issue
+		if (path.startsWith('\\') || /^[a-zA-Z]:/.test(path)) {
+			return false;
+		}
+		
+		// Disallow hidden folders that might escape vault
+		if (path.startsWith('.')) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	private isTemplateInValidFolder(templatePath: string): boolean {
+		// First check if path is within vault
+		if (!this.isPathWithinVault(templatePath)) {
+			return false;
+		}
+		
+		// If no template folder is configured, any vault file is valid
+		if (!this.plugin.settings.templateFolder) {
+			return true;
+		}
+		
+		// Check if template is within the configured template folder
+		return templatePath.startsWith(this.plugin.settings.templateFolder);
 	}
 }
 
