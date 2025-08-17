@@ -49,9 +49,10 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new FolderSearchModal(this.app, async (folder: TFolder) => {
-							// Validate that folder is within vault
-							if (this.isPathWithinVault(folder.path)) {
-								this.plugin.settings.templateFolder = folder.path;
+							// Normalize root path to empty string for UI consistency, then validate
+							const chosenPath = folder.path === '/' ? '' : folder.path;
+							if (this.isPathWithinVault(chosenPath)) {
+								this.plugin.settings.templateFolder = chosenPath;
 								await this.plugin.saveSettings();
 								this.display();
 							} else {
@@ -124,8 +125,8 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setButtonText('Select')
 					.onClick(() => {
 						new TemplateSearchModal(this.app, this.plugin.settings.templateFolder, async (file: TFile) => {
-							// Validate that template is within the template folder
-							if (this.isTemplateInValidFolder(file.path)) {
+							// Validate that template is within the configured template folder
+							if (this.isTemplateInConfiguredFolder(file.path)) {
 								command.templatePath = file.path;
 								await this.plugin.saveSettings();
 								this.display();
@@ -199,9 +200,11 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 	private isPathWithinVault(path: string): boolean {
 		// Normalize to POSIX, strip leading slashes (vault-relative)
 		const normalizedPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+		// Collapse duplicate slashes
+		const collapsedPath = normalizedPath.replace(/\/+/g, '/');
 
 		// Allow empty path (vault root)
-		if (normalizedPath === '') {
+		if (collapsedPath === '') {
 			return true;
 		}
 
@@ -210,8 +213,13 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			return false;
 		}
 
+		// Block UNC/network-like paths: //server/share or \\server\share
+		if (/^(?:\\\\|\/\/)/.test(path)) {
+			return false;
+		}
+
 		// Reject parent directory traversal
-		const segments = normalizedPath.split('/');
+		const segments = collapsedPath.split('/');
 		if (segments.some(seg => seg === '..')) {
 			return false;
 		}
@@ -224,7 +232,7 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 		return true;
 	}
 
-	private isTemplateInValidFolder(templatePath: string): boolean {
+	private isTemplateInConfiguredFolder(templatePath: string): boolean {
 		// First check if path is within vault
 		if (!this.isPathWithinVault(templatePath)) {
 			return false;
@@ -259,8 +267,11 @@ class TemplateSearchModal extends FuzzySuggestModal<TFile> {
 		const files = this.app.vault.getMarkdownFiles();
 		
 		if (!this.templateFolder) {
-			// If no template folder is set, show all markdown files
-			return files;
+			// If no template folder is set, show all markdown files (excluding hidden)
+			return files.filter(file => {
+				const segments = file.path.split('/');
+				return !segments.some(seg => seg.startsWith('.'));
+			});
 		}
 		
 		// Normalize template folder for comparison
@@ -269,6 +280,11 @@ class TemplateSearchModal extends FuzzySuggestModal<TFile> {
 		// Filter files in the template folder (boundary-aware)
 		return files.filter(file => {
 			const normalizedPath = file.path.replace(/\\/g, '/').replace(/^\/+/, '');
+			// Exclude files in hidden folders
+			const segments = normalizedPath.split('/');
+			if (segments.some(seg => seg.startsWith('.'))) {
+				return false;
+			}
 			return normalizedPath === normalizedFolder || 
 				normalizedPath.startsWith(normalizedFolder + '/');
 		});
