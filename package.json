@@ -6,7 +6,7 @@
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
 		"version": "npm run bump:files",
 		"bump:files": "node version-bump.mjs && git add manifest.json versions.json"
 	},
