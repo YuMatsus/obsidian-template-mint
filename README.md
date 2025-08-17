@@ -100,9 +100,3 @@ This plugin is designed to work alongside Obsidian's core Templates plugin. You 
 ## License
 
 MIT
-
-## Support
-
-If you find this plugin helpful, consider supporting its development:
-- Report issues on GitHub
-- Submit feature requests
