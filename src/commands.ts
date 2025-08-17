@@ -25,7 +25,7 @@ export class CommandManager {
 	registerCommands(): void {
 		// Register main command to create note from template
 		this.plugin.addCommand({
-			id: `${this.plugin.manifest.id}:create-note-from-template`,
+			id: 'create-note-from-template',
 			name: 'Create note from template',
 			callback: () => {
 				this.showTemplatePickerModal();
@@ -113,7 +113,7 @@ export class CommandManager {
 
 	private generateCommandId(name: string): string {
 		const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
-		return `${this.plugin.manifest.id}:${slug}`;
+		return slug;
 	}
 }
 
