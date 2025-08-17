@@ -72,8 +72,8 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 				button
 					.setButtonText('Add Command')
 					.setIcon('plus')
-					.onClick(() => {
-						this.addNewCommand();
+					.onClick(async () => {
+						await this.addNewCommand();
 					});
 			});
 
@@ -99,7 +99,10 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					.setValue(command.name)
 					.onChange(async (value) => {
 						command.name = value;
-						command.id = this.generateCommandId(value);
+						// Don't regenerate ID when name changes to preserve hotkeys
+						if (!command.id) {
+							command.id = this.generateCommandId(value);
+						}
 						await this.plugin.saveSettings();
 					});
 			});
@@ -168,7 +171,7 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			});
 	}
 
-	private addNewCommand(): void {
+	private async addNewCommand(): Promise<void> {
 		const newCommand: CommandConfig = {
 			id: this.generateCommandId('New Template Command'),
 			name: 'New Template Command',
@@ -177,12 +180,13 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 		};
 		
 		this.plugin.settings.commands.push(newCommand);
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 		this.display();
 	}
 
 	private generateCommandId(name: string): string {
-		return 'template-mint:' + name.toLowerCase().replace(/\s+/g, '-');
+		const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
+		return `${this.plugin.manifest.id}:${slug}`;
 	}
 }
 
@@ -242,7 +246,7 @@ class FolderSearchModal extends FuzzySuggestModal<TFolder> {
 		
 		collectFolders(rootFolder);
 		return folders
-			.filter(f => f.path !== '.obsidian')
+			.filter(f => !f.path.startsWith('.obsidian'))
 			.sort((a, b) => a.path.localeCompare(b.path));
 	}
 

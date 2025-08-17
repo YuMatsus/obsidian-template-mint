@@ -1,5 +1,12 @@
-import { App, Notice, TFile, moment } from 'obsidian';
+import { App, Notice, TFile, TFolder, MarkdownView, moment, normalizePath } from 'obsidian';
 import { TemplateProcessor } from './templateProcessor';
+import { Commands } from './types';
+
+declare module 'obsidian' {
+	interface App {
+		commands: Commands;
+	}
+}
 
 export class NoteCreator {
 	private app: App;
@@ -17,10 +24,13 @@ export class NoteCreator {
 			const fileName = `${timestamp}.md`;
 			
 			// Construct file path
-			const filePath = this.getFilePath(fileName, destinationFolder);
+			const rawFilePath = this.getFilePath(fileName, destinationFolder);
 			
 			// Ensure destination folder exists
 			await this.ensureDirectoryExists(destinationFolder);
+			
+			// Ensure the file path is unique (avoid rare same-millisecond collisions)
+			const filePath = await this.getUniqueFilePath(rawFilePath);
 			
 			// Read template content
 			const templateContent = await this.app.vault.read(templateFile);
@@ -37,6 +47,7 @@ export class NoteCreator {
 			await this.openFile(newFile);
 			
 		} catch (error) {
+			console.error('[Template Mint] Failed to create note from template', error);
 			const msg = error instanceof Error ? error.message : String(error);
 			new Notice(`Failed to create note: ${msg}`);
 		}
@@ -47,8 +58,22 @@ export class NoteCreator {
 			return fileName;
 		}
 		
-		const normalizedDir = destinationFolder.replace(/\/+$/, '');
+		const normalizedDir = normalizePath(destinationFolder).replace(/\/+$/, '');
 		return normalizedDir ? `${normalizedDir}/${fileName}` : fileName;
+	}
+
+	private async getUniqueFilePath(filePath: string): Promise<string> {
+		const adapter = this.app.vault.adapter;
+		const dot = filePath.lastIndexOf('.');
+		const base = dot > 0 ? filePath.slice(0, dot) : filePath;
+		const ext = dot > 0 ? filePath.slice(dot) : '';
+		let candidate = filePath;
+		let i = 1;
+		while (await adapter.exists(candidate)) {
+			candidate = `${base} ${i}${ext}`;
+			i += 1;
+		}
+		return candidate;
 	}
 
 	private async ensureDirectoryExists(folderPath: string): Promise<void> {
@@ -56,17 +81,21 @@ export class NoteCreator {
 			return;
 		}
 
-		const normalizedPath = folderPath.replace(/\/+$/, '');
-		const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
-		
-		if (!folder) {
-			try {
-				await this.app.vault.createFolder(normalizedPath);
-			} catch (error) {
-				// Ignore if folder already exists
-				if (error instanceof Error && !error.message.includes('already exists')) {
-					throw error;
-				}
+		const normalizedPath = normalizePath(folderPath).replace(/\/+$/, '');
+		const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+		if (existing) {
+			if (!(existing instanceof TFolder)) {
+				throw new Error(`Destination exists and is a file, not a folder: ${normalizedPath}`);
+			}
+			return;
+		}
+		try {
+			await this.app.vault.createFolder(normalizedPath);
+		} catch (error) {
+			// Ignore concurrent creation races
+			if (!(error instanceof Error) || !/already exists/i.test(error.message)) {
+				throw error;
 			}
 		}
 	}
@@ -76,18 +105,9 @@ export class NoteCreator {
 		const leaf = this.app.workspace.getLeaf(false);
 		await leaf.openFile(file);
 		
-		// Focus on the editor
-		const view = leaf.view;
-		if (view && 'editor' in view) {
-			// @ts-ignore
-			const editor = view.editor;
-			if (editor) {
-				editor.focus();
-				// Move cursor to the end of the file
-				const lastLine = editor.lastLine();
-				const lastLineLength = editor.getLine(lastLine).length;
-				editor.setCursor({ line: lastLine, ch: lastLineLength });
-			}
-		}
+		// Focus on title editing (same as mono-task-note)
+		setTimeout(() => {
+			this.app.commands.executeCommandById('workspace:edit-file-title');
+		}, 100);
 	}
 }

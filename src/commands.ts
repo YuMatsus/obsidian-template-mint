@@ -2,6 +2,13 @@ import { Plugin, Notice, TFile, FuzzySuggestModal, App, TFolder } from 'obsidian
 import { TemplateMintSettings, CommandConfig } from './settings';
 import { TemplateProcessor } from './templateProcessor';
 import { NoteCreator } from './noteCreator';
+import { Commands } from './types';
+
+declare module 'obsidian' {
+	interface App {
+		commands: Commands;
+	}
+}
 
 export class CommandManager {
 	private plugin: Plugin & { settings: TemplateMintSettings };
@@ -18,7 +25,7 @@ export class CommandManager {
 	registerCommands(): void {
 		// Register main command to create note from template
 		this.plugin.addCommand({
-			id: 'create-note-from-template',
+			id: `${this.plugin.manifest.id}:create-note-from-template`,
 			name: 'Create note from template',
 			callback: () => {
 				this.showTemplatePickerModal();
@@ -36,10 +43,14 @@ export class CommandManager {
 	unregisterCommands(): void {
 		// Unregister custom commands (main command stays)
 		this.registeredCommandIds.forEach(id => {
-			// @ts-ignore - accessing private API to remove commands
-			const commands = this.plugin.app.commands?.commands;
-			if (commands && commands[id]) {
-				delete commands[id];
+			if (this.plugin.app.commands?.removeCommand) {
+				this.plugin.app.commands.removeCommand(id);
+			} else {
+				// Fallback for older versions
+				const commands = this.plugin.app.commands?.commands;
+				if (commands && commands[id]) {
+					delete commands[id];
+				}
 			}
 		});
 		this.registeredCommandIds = [];
@@ -47,6 +58,12 @@ export class CommandManager {
 
 	private registerCustomCommand(command: CommandConfig): void {
 		const commandId = command.id || this.generateCommandId(command.name);
+		
+		// Check for duplicate command IDs
+		if (this.registeredCommandIds.includes(commandId)) {
+			new Notice(`Duplicate command ID skipped: ${command.name}`);
+			return;
+		}
 		
 		this.plugin.addCommand({
 			id: commandId,
@@ -95,7 +112,8 @@ export class CommandManager {
 	}
 
 	private generateCommandId(name: string): string {
-		return 'template-mint:' + name.toLowerCase().replace(/\s+/g, '-');
+		const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
+		return `${this.plugin.manifest.id}:${slug}`;
 	}
 }
 
@@ -131,6 +149,7 @@ class TemplatePickerModal extends FuzzySuggestModal<TFile> {
 
 class DestinationPickerModal extends FuzzySuggestModal<string> {
 	private onChoose: (folder: string) => void;
+	private hasChosen = false;
 
 	constructor(app: App, onChoose: (folder: string) => void) {
 		super(app);
@@ -163,11 +182,14 @@ class DestinationPickerModal extends FuzzySuggestModal<string> {
 	}
 
 	onChooseItem(folder: string): void {
+		this.hasChosen = true;
 		this.onChoose(folder === '/' ? '' : folder);
 	}
 
 	onClose(): void {
-		// If user presses Esc, use root folder
-		this.onChoose('');
+		// If user dismissed without choosing (e.g., Esc), use root folder
+		if (!this.hasChosen) {
+			this.onChoose('');
+		}
 	}
 }
