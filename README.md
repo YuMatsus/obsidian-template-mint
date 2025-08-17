@@ -6,53 +6,124 @@ Create notes directly from templates in Obsidian with a streamlined workflow.
 
 While Obsidian's core Templates plugin allows you to insert templates into existing notes, **Template Mint** enables you to create new notes directly from templates in a single action. This plugin is designed to complement the core Templates plugin, using the same template format and variables for seamless compatibility.
 
-## Features (Planned)
+## Features
 
-**Note: This plugin is currently in initial development. The features below are planned but not yet implemented.**
-
-- **Direct note creation from templates** - Skip the manual steps of creating a note and then inserting a template
-- **Compatible with core Templates plugin** - Use the same template files and folder
-- **Template selection modal** - Quick visual selection of available templates
-- **Automatic variable replacement** - Support for date/time variables just like the core plugin
-- **Configurable folders** - Set your preferred template and output directories
-
-## Usage
-
-**Note: The functionality described below is not yet implemented. Currently, the plugin only provides a sample command for testing.**
-
-1. Set up your template folder in the plugin settings (can be the same folder used by core Templates plugin)
-2. Create markdown templates in your template folder
-3. Use the command "Create note from template" from the command palette
-4. Select a template from the modal
-5. A new note will be created instantly from the selected template
-
-## Template Variables
-
-**Note: Template variable support is planned but not yet implemented.**
-
-Supports standard template variables for compatibility with Obsidian's core Templates plugin:
-
-- `{{date}}` - Current date in YYYY-MM-DD format
-- `{{time}}` - Current time in HH:MM:SS format
-- `{{datetime}}` - Full ISO datetime
-
-## Settings
-
-**Note: Currently only a sample setting is available. The settings below will be implemented in future versions.**
-
-- **Template folder**: The folder containing your template files (can share with core Templates plugin)
-- **New note folder**: The folder where new notes will be created
+- 🔄 **Core Templates Compatible**: Works seamlessly with Obsidian's core Templates plugin - use the same template files and folder
+- 📁 **Direct Note Creation**: Skip the manual steps of creating a note and then inserting a template
+- 🎯 **Custom Commands**: Create unlimited custom commands, each linked to a specific template
+- 📍 **Flexible Destination**: Specify different output folders for each command
+- 🔤 **Familiar Variables**: Supports standard template variables compatible with core Templates plugin
+- ⚡ **Quick Access**: Access templates through command palette or custom hotkeys
 
 ## Installation
 
-1. Download the latest release
-2. Extract the files to your vault's `.obsidian/plugins/template-mint` folder
+1. Download the latest release from the releases page
+2. Extract the files to your vault's `.obsidian/plugins/template-mint/` folder
 3. Enable the plugin in Obsidian's settings
+
+## Usage
+
+### Initial Setup
+
+1. Open Settings → Template Mint
+2. Select your template folder using the folder picker (can be the same folder used by core Templates plugin)
+3. Create custom commands for your frequently used templates
+
+### Creating Custom Commands
+
+1. Click "Add Command" in the settings
+2. Configure:
+   - **Command Name**: The name that appears in the command palette
+   - **Template**: Select the template file to use
+   - **Destination Folder**: Choose where new notes will be created
+
+### Creating Notes
+
+**Method 1: Using Custom Commands**
+- Open command palette (Ctrl/Cmd + P)
+- Search for your custom command name
+- The note will be created instantly in the specified location
+
+**Method 2: Using Template Picker**
+- Open command palette (Ctrl/Cmd + P)
+- Run "Create note from template"
+- Select a template from the picker
+- Choose the destination folder
+
+### Template Variables
+
+Template Mint supports all standard Obsidian template variables for full compatibility with the core Templates plugin, plus additional convenience variables:
+
+#### Core Compatible Variables (Same as Obsidian's Templates plugin)
+- `{{title}}` - Note filename without extension
+- `{{date}}` - Current date (YYYY-MM-DD)
+- `{{time}}` - Current time (HH:mm)
+
+#### Additional Variables (Template Mint Extensions)
+- `{{year}}` - Current year (YYYY)
+- `{{month}}` - Current month (MM)
+- `{{monthname}}` - Month name (e.g., January)
+- `{{week}}` - Week number
+- `{{weekyear}}` - Year and week (YYYY-Www)
+- `{{day}}` - Day of month (DD)
+- `{{dayname}}` - Day name (e.g., Monday)
+
+#### Relative Dates
+- `{{yesterday}}` - Yesterday's date
+- `{{tomorrow}}` - Tomorrow's date
+- `{{lastweek}}` - Date one week ago
+- `{{nextweek}}` - Date one week ahead
+- `{{lastmonth}}` - Date one month ago
+- `{{nextmonth}}` - Date one month ahead
+
+#### Custom Formats
+- `{{date:FORMAT}}` - Custom date format using moment.js syntax
+- `{{time:FORMAT}}` - Custom time format using moment.js syntax
+
+Example: `{{date:YYYY-MM-DD dddd}}` → "2024-01-15 Monday"
+
+## File Naming
+
+Notes are created with a 13-digit Unix timestamp (milliseconds) as the filename, ensuring uniqueness and chronological ordering.
+
+## Development
+
+### Setup
+```bash
+npm install
+```
+
+### Development Build
+```bash
+npm run dev
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+### Type Checking
+```bash
+npx tsc -noEmit -skipLibCheck
+```
+
+### Linting
+```bash
+npx eslint . --ext .ts
+```
 
 ## Compatibility
 
-This plugin is designed to work alongside Obsidian's core Templates plugin. You can use the same template files for both plugins, ensuring a consistent workflow across your vault.
+This plugin is designed to work alongside Obsidian's core Templates plugin. You can use the same template files for both plugins, ensuring a consistent workflow across your vault. Template Mint extends the functionality by allowing direct note creation from templates, while maintaining full compatibility with your existing template setup.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT
+
+## Support
+
+If you find this plugin helpful, consider supporting its development:
+- Report issues on GitHub
+- Submit feature requests
+- Contribute to the codebase
