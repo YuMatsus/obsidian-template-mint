@@ -180,13 +180,14 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 	}
 
 	private async addNewCommand(): Promise<void> {
+		const baseName = 'New Template Command';
 		const newCommand: CommandConfig = {
-			id: this.generateCommandId('New Template Command'),
-			name: 'New Template Command',
+			id: this.generateUniqueCommandId(baseName),
+			name: baseName,
 			templatePath: '',
 			destinationFolder: ''
 		};
-		
+
 		this.plugin.settings.commands.push(newCommand);
 		await this.plugin.saveSettings();
 		this.display();
@@ -195,6 +196,21 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 	private generateCommandId(name: string): string {
 		const slug = name.toLowerCase().trim().replace(/\s+/g, '-');
 		return `${this.plugin.manifest.id}:${slug}`;
+	}
+
+	private generateUniqueCommandId(baseName: string): string {
+		const baseId = this.generateCommandId(baseName);
+		const existingIds = this.plugin.settings.commands.map(cmd => cmd.id);
+
+		if (!existingIds.includes(baseId)) {
+			return baseId;
+		}
+
+		let counter = 1;
+		while (existingIds.includes(`${baseId}-${counter}`)) {
+			counter++;
+		}
+		return `${baseId}-${counter}`;
 	}
 
 	private isPathWithinVault(path: string): boolean {
