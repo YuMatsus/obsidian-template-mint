@@ -6,6 +6,7 @@ export interface CommandConfig {
 	name: string;
 	templatePath: string;
 	destinationFolder: string;
+	defaultNoteName: string;
 }
 
 export interface TemplateMintSettings {
@@ -165,6 +166,21 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 					});
 			});
 
+		// Default note name
+		new Setting(commandDiv)
+			.setName('Default Note Name')
+			.setDesc('Default name for new notes. Supports {{date}}, {{time}}, {{date:FORMAT}}, {{time:FORMAT}}. Leave empty for timestamp.')
+			.addText(text => {
+				text
+					.setPlaceholder('e.g. {{date}} Meeting Notes')
+					.setValue(command.defaultNoteName || '')
+					.onChange(async (value) => {
+						command.defaultNoteName = value;
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.style.width = '300px';
+			});
+
 		// Delete button
 		new Setting(commandDiv)
 			.addButton(button => {
@@ -185,7 +201,8 @@ export class TemplateMintSettingTab extends PluginSettingTab {
 			id: this.generateUniqueCommandId(baseName),
 			name: baseName,
 			templatePath: '',
-			destinationFolder: ''
+			destinationFolder: '',
+			defaultNoteName: ''
 		};
 
 		this.plugin.settings.commands.push(newCommand);
