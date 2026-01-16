@@ -79,7 +79,7 @@ export class CommandManager {
 	private async executeCommand(command: CommandConfig): Promise<void> {
 		try {
 			const templateFile = this.plugin.app.vault.getAbstractFileByPath(command.templatePath);
-			
+
 			if (!templateFile || !(templateFile instanceof TFile)) {
 				new Notice(`Template not found: ${command.templatePath}`);
 				return;
@@ -87,7 +87,8 @@ export class CommandManager {
 
 			await this.noteCreator.createNoteFromTemplate(
 				templateFile,
-				command.destinationFolder
+				command.destinationFolder,
+				command.defaultNoteName
 			);
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : String(error);

@@ -17,12 +17,25 @@ export class NoteCreator {
 		this.templateProcessor = templateProcessor;
 	}
 
-	async createNoteFromTemplate(templateFile: TFile, destinationFolder: string): Promise<void> {
+	async createNoteFromTemplate(
+		templateFile: TFile,
+		destinationFolder: string,
+		defaultNoteName?: string
+	): Promise<void> {
 		try {
-			// Generate unique filename with 13-digit Unix timestamp (milliseconds)
-			const timestamp = moment().format('x');
-			const fileName = `${timestamp}.md`;
-			
+			// Generate filename
+			let fileName: string;
+			if (defaultNoteName) {
+				// Process template variables in the default note name
+				const processedName = this.templateProcessor.processFileNameVariables(defaultNoteName);
+				// Sanitize filename (remove invalid characters)
+				const sanitizedName = this.sanitizeFileName(processedName);
+				fileName = sanitizedName ? `${sanitizedName}.md` : `${moment().format('x')}.md`;
+			} else {
+				// Fallback to 13-digit Unix timestamp (milliseconds)
+				fileName = `${moment().format('x')}.md`;
+			}
+
 			// Construct file path
 			const rawFilePath = this.getFilePath(fileName, destinationFolder);
 			
@@ -55,9 +68,14 @@ export class NoteCreator {
 		if (!destinationFolder) {
 			return fileName;
 		}
-		
+
 		const normalizedDir = normalizePath(destinationFolder).replace(/\/+$/, '');
 		return normalizedDir ? `${normalizedDir}/${fileName}` : fileName;
+	}
+
+	private sanitizeFileName(name: string): string {
+		// Remove characters invalid in filenames: \ / : * ? " < > |
+		return name.replace(/[\\/:*?"<>|]/g, '').trim();
 	}
 
 	private async getUniqueFilePath(filePath: string): Promise<string> {
