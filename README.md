@@ -39,6 +39,7 @@ While Obsidian's core Templates plugin allows you to insert templates into exist
    - **Command Name**: The name that appears in the command palette
    - **Template**: Select the template file to use
    - **Destination Folder**: Choose where new notes will be created
+   - **Default Note Name**: Set a default filename for new notes (supports template variables)
 
 ### Creating Notes
 
@@ -67,7 +68,16 @@ Example: `{{date:YYYY-MM-DD}}` → "2024-01-15"
 
 ## File Naming
 
-Notes are created with a 13-digit Unix timestamp (milliseconds) as the filename, ensuring uniqueness and chronological ordering.
+By default, notes are created with a 13-digit Unix timestamp (milliseconds) as the filename, ensuring uniqueness and chronological ordering.
+
+When a **Default Note Name** is configured for a command, the note will use that name instead. Template variables are supported:
+
+- `{{date}}` → `2024-01-15`
+- `{{time}}` → `14:30`
+- `{{date:YYYYMMDD}}` → `20240115`
+- `{{date:YYYY-[W]ww}}` → `2024-W03`
+
+Example: Setting `{{date}} Meeting Notes` creates a note named `2024-01-15 Meeting Notes.md`
 
 ## Development
 
